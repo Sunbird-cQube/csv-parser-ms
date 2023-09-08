@@ -1,0 +1,22 @@
+[tool.poetry]
+name = "cqube-csv-parser-service"
+version = "0.1.0"
+description = ""
+authors = ["Tushar <30565750+tushar5526@users.noreply.github.com>"]
+readme = "README.md"
+packages = [{include = "cqube_csv_parser_service"}]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+fastapi = "^0.103.1"
+uvicorn = "^0.23.2"
+python-multipart = "^0.0.6"
+pandas = "^2.1.0"
+python-dotenv = "^1.0.0"
+
+[tool.poetry.group.dev.dependencies]
+black = "^23.7.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
