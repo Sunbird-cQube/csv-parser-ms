@@ -1,6 +1,6 @@
 import os
 from fastapi import UploadFile
-
+import shutil
 
 async def save_uploaded_file(file: UploadFile, full_filepath: str):
     # Define a directory where you want to save uploaded files
@@ -19,3 +19,9 @@ def generate_filepath(token: str):
     base_path = os.getenv("TMP_BASE_PATH")
     filepath = os.path.join(base_path, token)
     return filepath
+
+
+def create_folder_if_not(path: str):
+    if os.path.exists(path):
+        shutil.rmtree(path)
+    os.makedirs(path)
