@@ -15,5 +15,5 @@ poetry install
 ```
 3. Run the server
 ```shell
-cp .env.sample .env && cd src && poetry run uvicorn main:app --reload
+cp .env.sample .env && poetry run uvicorn src.main:app --reload
 ```
