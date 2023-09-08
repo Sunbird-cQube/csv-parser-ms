@@ -3,9 +3,9 @@ import pandas as pd
 import os
 from datetime import datetime
 import json
-import re
-from fastapi import UploadFile
-from .utils import create_folder_if_not
+import re, shutil
+from .utils import create_folder_if_not, get_directory_structure
+from ..settings import DEFAULT_PROGRAM_NAME, TMP_BASE_PATH
 
 
 def format_df_columns(df: pd.DataFrame):
@@ -28,23 +28,24 @@ def format_df_columns(df: pd.DataFrame):
 
 
 def guess_metrics_and_columns(token: str, filename: str):
-    base_path = os.getenv("TMP_BASE_PATH")
-    file_path = os.path.join(base_path, token, filename)
+    file_path = os.path.join(TMP_BASE_PATH, token, filename)
     df = pd.read_csv(file_path)
     column_type_dict = dict()
 
     for column in df.columns:
         if df[column].dtype == "int":
-            column_type_dict[df[column].name] = {'metric': True, 'dimension': False}
+            column_type_dict[df[column].name] = {"metric": True, "dimension": False}
         else:
-            column_type_dict[df[column].name] = {'metric': False, 'dimension': True}
+            column_type_dict[df[column].name] = {"metric": False, "dimension": True}
     return column_type_dict
 
 
 def generate_ingest_files(token: str, column_metadata: typing.Dict):
-    base_path = os.getenv("TMP_BASE_PATH")
-    folder_path = os.path.join(base_path, token)
-    file_path = os.path.join(folder_path, [file for file in os.listdir(folder_path) if file.endswith('.csv')][0])
+    folder_path = os.path.join(TMP_BASE_PATH, token)
+    file_path = os.path.join(
+        folder_path,
+        [file for file in os.listdir(folder_path) if file.endswith(".csv")][0],
+    )
     df = pd.read_csv(file_path)
 
     column_mapping = format_df_columns(df)
@@ -52,24 +53,24 @@ def generate_ingest_files(token: str, column_metadata: typing.Dict):
     metrics, dimensions = [], []
 
     for cols in column_metadata:
-        if column_metadata[cols]['metric']:
+        if column_metadata[cols]["metric"]:
             metrics.append(column_mapping[cols])
-        else: dimensions.append(column_mapping[cols])
+        else:
+            dimensions.append(column_mapping[cols])
 
-    ingest_folder_path = os.path.join(folder_path, 'ingest')
+    ingest_folder_path = os.path.join(folder_path, "ingest")
 
+    default_program_name = os.getenv("DEFAULT_PROGRAM_NAME")
+    default_program_desc = default_program_name + " desc"
     write_dimensions_to_ingest_folder(df, dimensions, ingest_folder_path)
-    write_events_to_ingest_folder(df, dimensions, metrics, 'test', ingest_folder_path)
-    write_config_to_ingest_folder('test', 'test desc', ingest_folder_path)
+    write_events_to_ingest_folder(
+        df, dimensions, metrics, default_program_name, ingest_folder_path
+    )
+    write_config_to_ingest_folder(
+        default_program_name, default_program_desc, ingest_folder_path
+    )
 
     return {"dimension": dimensions, "metrics": metrics}
-
-
-
-
-
-
-
 
 
 def write_dimensions_to_ingest_folder(
@@ -127,6 +128,7 @@ def write_events_to_ingest_folder(
             os.path.join(events_base_path, f"{metric}-event.data.csv"), index=False
         )
 
+
 def write_config_to_ingest_folder(
     program_name, program_description, ingest_folder_path
 ):
@@ -156,34 +158,20 @@ def write_config_to_ingest_folder(
 
     with open(os.path.join(ingest_folder_path, "config.json"), "w") as f:
         f.write(config_json)
-#
-#
-# def create_ingest_folder(raw_csv_file_path: str, ingest_folder_path: str):
-#     print(f"Processing CSV file: {raw_csv_file_path}")
-#
-#     try:
-#         df = pd.read_csv(raw_csv_file_path)
-#     except Exception as e:
-#         print("An error occured", e)
-#         exit(1)
-#
-#     df = format_df_columns(df)
-#
-#     dimensions, metrics = get_metrics_and_columns(df)
-#     print("Dimensions are", dimensions)
-#     print("Metrics are", metrics)
-#
-#     write_dimensions_to_ingest_folder(df, dimensions, ingest_folder_path)
-#
-#     program_name = typer.prompt("Input the Program Name")
-#     program_description = typer.prompt("Input the Program Descrption")
-#
-#     write_events_to_ingest_folder(
-#         df, dimensions, metrics, program_name, ingest_folder_path
-#     )
-#     write_config_to_ingest_folder(program_name, program_description, ingest_folder_path)
 
 
-def create_folder_if_not(path: str):
-    if not os.path.exists(path):
-        os.makedirs(path)
+def get_dimensions(token: str):
+    folder_path = os.path.join(TMP_BASE_PATH, token, "ingest/", "dimensions")
+    return get_directory_structure(folder_path)
+
+
+def get_events(token: str):
+    folder_path = os.path.join(
+        TMP_BASE_PATH, token, "ingest/programs", DEFAULT_PROGRAM_NAME
+    )
+    return get_directory_structure(folder_path)
+
+def download_ingest_folder(token: str):
+    ingest_folder_path = os.path.join(TMP_BASE_PATH, token, 'ingest')
+    zip_location_path = os.path.join(TMP_BASE_PATH, token, 'cqube-ingest')
+    return shutil.make_archive(zip_location_path, 'zip', ingest_folder_path)

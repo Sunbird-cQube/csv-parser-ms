@@ -1,6 +1,7 @@
-import os
+import os, re
 from fastapi import UploadFile
 import shutil
+import tempfile
 
 async def save_uploaded_file(file: UploadFile, full_filepath: str):
     # Define a directory where you want to save uploaded files
@@ -25,3 +26,26 @@ def create_folder_if_not(path: str):
     if os.path.exists(path):
         shutil.rmtree(path)
     os.makedirs(path)
+
+
+def validate_token(token):
+    unsafe_pattern = r'[\/\0:*\?"\'$!]'
+    return not re.search(unsafe_pattern, token)
+
+
+def get_directory_structure(path):
+    result = {"name": os.path.basename(path), "type": "folder", "children": []}
+
+    try:
+        with os.scandir(path) as entries:
+            for entry in entries:
+                if entry.is_dir():
+                    result["children"].append(get_directory_structure(entry.path))
+                else:
+                    result["children"].append({"name": entry.name, "type": "file"})
+    except OSError as e:
+        print(f"Error scanning directory {path}: {str(e)}")
+
+    return result
+
+
