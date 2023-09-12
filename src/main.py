@@ -1,7 +1,7 @@
 from fastapi import FastAPI, UploadFile, HTTPException, status
 from dotenv import load_dotenv
 from fastapi.responses import FileResponse
-
+from fastapi.middleware.cors import CORSMiddleware
 from .utils.utils import save_uploaded_file, generate_filepath, validate_token
 from .utils import csv_parser_utils
 from .models import RequestData
@@ -11,8 +11,20 @@ load_dotenv()
 
 app = FastAPI()
 
+origins = [
+    "http://localhost",
+    "http://localhost:3000",
+]
 
-@app.post("/upload-raw-csv/")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+@app.post("/api/upload-raw-csv/")
 async def create_upload_file(file: UploadFile, token: str):
     if not file.filename.endswith(".csv"):
         raise HTTPException(
@@ -32,31 +44,39 @@ async def create_upload_file(file: UploadFile, token: str):
     }
 
 
-@app.post("/generate-ingest-files/")
+@app.post("/api/generate-ingest-files/")
 async def generate_ingest_files(token: str, data: RequestData):
     return csv_parser_utils.generate_ingest_files(
         token, data.column_metadata.model_dump()
     )
 
 
-@app.get("/dimensions/")
+@app.get("/api/dimensions/")
 async def get_dim_files(token: str):
     return csv_parser_utils.get_dimensions(token)
 
-@app.post('/dimensions/')
+@app.post('/api/dimensions/')
 async def update_dim_file():
     return "update success"
 
-@app.get("/events/")
+@app.get("/api/events/")
 async def get_eve_files(token: str):
     return csv_parser_utils.get_events(token)
 
-@app.post("/events/")
+@app.post("/api/events/")
 async def update_eve_file(token: str):
     return "update success"
 
-@app.get('/downlod-ingest/', response_class=FileResponse)
+@app.get('/api/downlod-ingest/', response_class=FileResponse)
 async def download_ingest_folder(token: str):
     zip_folder_path = csv_parser_utils.download_ingest_folder(token)
     return FileResponse(zip_folder_path, media_type='application/zip', filename='ingest.zip')
 
+
+@app.get("/api/getDimensionFileContent/")
+async def get_dim_files(token: str ,filename:str):
+    return {
+        "content": csv_parser_utils.fetch_file_content(
+            token, filename
+        )
+    }

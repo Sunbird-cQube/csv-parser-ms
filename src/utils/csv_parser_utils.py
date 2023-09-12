@@ -10,7 +10,7 @@ from ..settings import DEFAULT_PROGRAM_NAME, TMP_BASE_PATH
 
 def format_df_columns(df: pd.DataFrame):
     unformatted_column_names = df.columns.to_list()
-
+  
     def clean_column_name(column_name):
         # Convert to lowercase
         column_name = column_name.lower()
@@ -38,6 +38,9 @@ def guess_metrics_and_columns(token: str, filename: str):
         else:
             column_type_dict[df[column].name] = {"metric": False, "dimension": True}
     return column_type_dict
+
+
+
 
 
 def generate_ingest_files(token: str, column_metadata: typing.Dict):
@@ -174,4 +177,15 @@ def get_events(token: str):
 def download_ingest_folder(token: str):
     ingest_folder_path = os.path.join(TMP_BASE_PATH, token, 'ingest')
     zip_location_path = os.path.join(TMP_BASE_PATH, token, 'cqube-ingest')
+
+
     return shutil.make_archive(zip_location_path, 'zip', ingest_folder_path)
+
+
+def fetch_file_content(token:str ,filename:str):
+    file_path = os.path.join(TMP_BASE_PATH, token,'ingest','dimensions', filename)
+    df = pd.read_csv(file_path)
+    column_type_dict = dict()
+    json_response = df.to_json(orient='records');
+
+    return   json_response
