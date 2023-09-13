@@ -95,9 +95,6 @@ def write_dimensions_to_ingest_folder(
     dimensions_base_path = os.path.join(ingest_folder_path, "dimensions")
     create_folder_if_not(dimensions_base_path)
 
-    print(
-        ":boom: [blue]Generating Dimension Grammar and Dimension Data[/blue] from CSV"
-    )
     for dimension in dimensions:
         dimension_grammar_data = f"""PK,Index
 string,string
@@ -120,7 +117,6 @@ string,string
 def write_events_to_ingest_folder(
     df: pd.DataFrame, dimensions, metrics, program_name, ingest_folder_path
 ):
-    print(":boom: [blue]Generating Event Grammar and Event Data[/blue] from CSV")
     events_base_path = os.path.join(ingest_folder_path, "programs", program_name)
     create_folder_if_not(events_base_path)
 
@@ -148,8 +144,6 @@ def write_events_to_ingest_folder(
 def write_config_to_ingest_folder(
     program_name, program_description, ingest_folder_path
 ):
-    print(":boom: [blue]Generating Config File [/blue] from CSV")
-
     config_template = {
         "globals": {"onlyCreateWhitelisted": "true"},
         "dimensions": {
