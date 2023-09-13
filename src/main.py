@@ -24,6 +24,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 @app.post("/api/upload-raw-csv/")
 async def create_upload_file(file: UploadFile, token: str):
     if not file.filename.endswith(".csv"):
@@ -36,6 +37,7 @@ async def create_upload_file(file: UploadFile, token: str):
             status.HTTP_400_BAD_REQUEST,
             detail=f"Invalid token, token is not Unix Path safe, avoid adding special characters.",
         )
+
     await save_uploaded_file(file, generate_filepath(token))
     return {
         "column_metadata": csv_parser_utils.guess_metrics_and_columns(
@@ -55,28 +57,30 @@ async def generate_ingest_files(token: str, data: RequestData):
 async def get_dim_files(token: str):
     return csv_parser_utils.get_dimensions(token)
 
-@app.post('/api/dimensions/')
+
+@app.post("/api/dimensions/")
 async def update_dim_file():
     return "update success"
+
 
 @app.get("/api/events/")
 async def get_eve_files(token: str):
     return csv_parser_utils.get_events(token)
 
+
 @app.post("/api/events/")
 async def update_eve_file(token: str):
     return "update success"
 
-@app.get('/api/downlod-ingest/', response_class=FileResponse)
+
+@app.get("/api/downlod-ingest/", response_class=FileResponse)
 async def download_ingest_folder(token: str):
     zip_folder_path = csv_parser_utils.download_ingest_folder(token)
-    return FileResponse(zip_folder_path, media_type='application/zip', filename='ingest.zip')
+    return FileResponse(
+        zip_folder_path, media_type="application/zip", filename="ingest.zip"
+    )
 
 
 @app.get("/api/getDimensionFileContent/")
-async def get_dim_files(token: str ,filename:str):
-    return {
-        "content": csv_parser_utils.fetch_file_content(
-            token, filename
-        )
-    }
+async def get_dim_files_content(token: str, filename: str):
+    return {"content": csv_parser_utils.fetch_file_content(token, filename)}

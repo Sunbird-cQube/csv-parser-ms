@@ -3,6 +3,7 @@ from fastapi import UploadFile
 import shutil
 import tempfile
 
+
 async def save_uploaded_file(file: UploadFile, full_filepath: str):
     # Define a directory where you want to save uploaded files
     os.makedirs(full_filepath, exist_ok=True)
@@ -47,5 +48,3 @@ def get_directory_structure(path):
         print(f"Error scanning directory {path}: {str(e)}")
 
     return result
-
-

@@ -3,6 +3,7 @@ from pydantic import BaseModel, RootModel
 
 
 class ColumnMetadataItem(BaseModel):
+    updated_col_name: str
     metric: bool
     dimension: bool
 

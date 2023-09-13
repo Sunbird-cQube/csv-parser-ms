@@ -8,9 +8,16 @@ from .utils import create_folder_if_not, get_directory_structure
 from ..settings import DEFAULT_PROGRAM_NAME, TMP_BASE_PATH
 
 
-def format_df_columns(df: pd.DataFrame):
-    unformatted_column_names = df.columns.to_list()
-  
+def format_df_columns(df: pd.DataFrame, column_metadata):
+    # update column names with user specified column names
+
+    user_specified_column_name = {
+        old_column: mapping["updated_col_name"]
+        for old_column, mapping in column_metadata.items()
+    }
+
+    df = df.rename(columns=user_specified_column_name)
+
     def clean_column_name(column_name):
         # Convert to lowercase
         column_name = column_name.lower()
@@ -24,7 +31,7 @@ def format_df_columns(df: pd.DataFrame):
 
     old_column_mapping = {col: clean_column_name(col) for col in df.columns}
     df.columns = [clean_column_name(col) for col in df.columns]
-    return old_column_mapping
+    return df, old_column_mapping
 
 
 def guess_metrics_and_columns(token: str, filename: str):
@@ -34,13 +41,18 @@ def guess_metrics_and_columns(token: str, filename: str):
 
     for column in df.columns:
         if df[column].dtype == "int":
-            column_type_dict[df[column].name] = {"metric": True, "dimension": False}
+            column_type_dict[df[column].name] = {
+                "updated_col_name": df[column].name,
+                "metric": True,
+                "dimension": False,
+            }
         else:
-            column_type_dict[df[column].name] = {"metric": False, "dimension": True}
+            column_type_dict[df[column].name] = {
+                "updated_col_name": df[column].name,
+                "metric": False,
+                "dimension": True,
+            }
     return column_type_dict
-
-
-
 
 
 def generate_ingest_files(token: str, column_metadata: typing.Dict):
@@ -51,15 +63,16 @@ def generate_ingest_files(token: str, column_metadata: typing.Dict):
     )
     df = pd.read_csv(file_path)
 
-    column_mapping = format_df_columns(df)
+    df, column_mapping = format_df_columns(df, column_metadata)
 
     metrics, dimensions = [], []
 
     for cols in column_metadata:
+        updated_col_name = column_metadata[cols]["updated_col_name"]
         if column_metadata[cols]["metric"]:
-            metrics.append(column_mapping[cols])
+            metrics.append(column_mapping[updated_col_name])
         else:
-            dimensions.append(column_mapping[cols])
+            dimensions.append(column_mapping[updated_col_name])
 
     ingest_folder_path = os.path.join(folder_path, "ingest")
 
@@ -174,18 +187,17 @@ def get_events(token: str):
     )
     return get_directory_structure(folder_path)
 
+
 def download_ingest_folder(token: str):
-    ingest_folder_path = os.path.join(TMP_BASE_PATH, token, 'ingest')
-    zip_location_path = os.path.join(TMP_BASE_PATH, token, 'cqube-ingest')
+    ingest_folder_path = os.path.join(TMP_BASE_PATH, token, "ingest")
+    zip_location_path = os.path.join(TMP_BASE_PATH, token, "cqube-ingest")
+
+    return shutil.make_archive(zip_location_path, "zip", ingest_folder_path)
 
 
-    return shutil.make_archive(zip_location_path, 'zip', ingest_folder_path)
-
-
-def fetch_file_content(token:str ,filename:str):
-    file_path = os.path.join(TMP_BASE_PATH, token,'ingest','dimensions', filename)
+def fetch_file_content(token: str, filename: str):
+    file_path = os.path.join(TMP_BASE_PATH, token, "ingest", "dimensions", filename)
     df = pd.read_csv(file_path)
-    column_type_dict = dict()
-    json_response = df.to_json(orient='records');
+    json_response = df.to_json(orient="records")
 
-    return   json_response
+    return json_response
