@@ -3,6 +3,7 @@ services:
   schema-creator:
     build: .
     ports:
-    - ${EXTERNAL_PORT-5005}:80
+      - ${EXTERNAL_PORT-5005}:80
+    restart: always
     environment:
       TMP_BASE_PATH: './tmp'
