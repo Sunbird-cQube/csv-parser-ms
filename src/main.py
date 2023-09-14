@@ -49,7 +49,7 @@ async def create_upload_file(file: UploadFile, token: str):
 @app.post("/api/generate-ingest-files/")
 async def generate_ingest_files(token: str, data: RequestData):
     return csv_parser_utils.generate_ingest_files(
-        token, data.column_metadata.model_dump()
+        token, data.column_metadata.model_dump(), data.program_name, data.program_desc
     )
 
 
@@ -83,4 +83,8 @@ async def download_ingest_folder(token: str):
 
 @app.get("/api/getDimensionFileContent/")
 async def get_dim_files_content(token: str, filename: str):
-    return {"content": csv_parser_utils.fetch_file_content(token, filename)}
+    return {"content": csv_parser_utils.fetch_file_content(token, filename, "dimension")}
+
+@app.get("/api/getEventFileContent/")
+async def get_eve_files_content(token: str, filename: str):
+    return {"content": csv_parser_utils.fetch_file_content(token, filename, "event")}
