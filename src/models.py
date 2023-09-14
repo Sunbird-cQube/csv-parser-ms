@@ -27,7 +27,6 @@ class RequestData(BaseModel):
     def validate_program_name(cls, value):
         # Check if the program_name is path-safe (no special characters except "-", "_")
         # You can add more checks as needed
-        print('check called')
-        if not all(char.isalnum() or char in ('-', '_') for char in value):
+        if not all(char.isalnum() or char in ("-", "_") for char in value):
             raise ValueError("program_name must be path-safe (alphanumeric, '-', '_')")
         return value

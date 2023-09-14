@@ -81,10 +81,11 @@ async def download_ingest_folder(token: str):
     )
 
 
-@app.get("/api/getDimensionFileContent/")
+@app.get("/api/get-file-content/")
 async def get_dim_files_content(token: str, filename: str):
-    return {"content": csv_parser_utils.fetch_file_content(token, filename, "dimension")}
-
-@app.get("/api/getEventFileContent/")
-async def get_eve_files_content(token: str, filename: str):
-    return {"content": csv_parser_utils.fetch_file_content(token, filename, "event")}
+    content = csv_parser_utils.fetch_file_content(token, filename)
+    if not content:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="No such file found"
+        )
+    return {"content": content}

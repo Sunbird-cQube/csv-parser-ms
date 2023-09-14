@@ -55,7 +55,9 @@ def guess_metrics_and_columns(token: str, filename: str):
     return column_type_dict
 
 
-def generate_ingest_files(token: str, column_metadata: typing.Dict, program_name: str, program_desc: str):
+def generate_ingest_files(
+    token: str, column_metadata: typing.Dict, program_name: str, program_desc: str
+):
     folder_path = os.path.join(TMP_BASE_PATH, token)
     file_path = os.path.join(
         folder_path,
@@ -80,9 +82,7 @@ def generate_ingest_files(token: str, column_metadata: typing.Dict, program_name
     write_events_to_ingest_folder(
         df, dimensions, metrics, program_name, ingest_folder_path
     )
-    write_config_to_ingest_folder(
-        program_name, program_desc, ingest_folder_path
-    )
+    write_config_to_ingest_folder(program_name, program_desc, ingest_folder_path)
 
     return {"dimension": dimensions, "metrics": metrics}
 
@@ -174,12 +174,11 @@ def get_dimensions(token: str):
 
 
 def get_ingest_folder_path(token):
-    program_folder_path = os.path.join(
-        TMP_BASE_PATH, token, "ingest/programs"
-    )
+    program_folder_path = os.path.join(TMP_BASE_PATH, token, "ingest/programs")
     program_name = os.listdir(program_folder_path)[0]
     folder_path = os.path.join(program_folder_path, program_name)
     return folder_path
+
 
 def get_events(token: str):
     return get_directory_structure(get_ingest_folder_path(token))
@@ -192,11 +191,18 @@ def download_ingest_folder(token: str):
     return shutil.make_archive(zip_location_path, "zip", ingest_folder_path)
 
 
-def fetch_file_content(token: str, filename: str, filetype: str):
-    if filetype == 'dimension':
-        file_path = os.path.join(TMP_BASE_PATH, token, "ingest", "dimensions", filename)
-    else:
+def fetch_file_content(token: str, filename: str):
+    if filename.endswith("event.data.csv") or filename.endswith("event.grammar.csv"):
         file_path = os.path.join(get_ingest_folder_path(token), filename)
+    elif filename.endswith("dimension.data.csv") or filename.endswith(
+        "dimension.grammar.csv"
+    ):
+        file_path = os.path.join(TMP_BASE_PATH, token, "ingest", "dimensions", filename)
+
+    else:
+        return None
+    if not os.path.exists(file_path):
+        return None
     df = pd.read_csv(file_path)
     json_response = df.head().to_json(orient="records")
     return json_response
