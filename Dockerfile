@@ -7,4 +7,4 @@ COPY ./pyproject.toml /code/pyproject.toml
 RUN poetry export -f requirements.txt --output requirements.txt --only main
 RUN pip install --no-cache-dir --upgrade -r /code/requirements.txt
 COPY ./src /code/app
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "80"]
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "3004"]
