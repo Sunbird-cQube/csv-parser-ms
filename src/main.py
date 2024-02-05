@@ -14,6 +14,7 @@ app = FastAPI()
 origins = [
     "http://localhost",
     "http://localhost:3000",
+    "http://localhost:3001",
 ]
 
 app.add_middleware(
@@ -49,7 +50,7 @@ async def create_upload_file(file: UploadFile, token: str):
 @app.post("/api/generate-ingest-files/")
 async def generate_ingest_files(token: str, data: RequestData):
     return csv_parser_utils.generate_ingest_files(
-        token, data.column_metadata.model_dump(), data.program_name, data.program_desc
+        token, data.column_metadata.model_dump(), data.program_name, data.program_desc, data.dimensions
     )
 
 
